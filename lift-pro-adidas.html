@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LIFT PRO - Fitness Training</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #000000;
+            --secondary: #FFFFFF;
+            --accent: #FF6B35;
+            --accent-light: #FFE5D9;
+            --gray-dark: #1A1A1A;
+            --gray-medium: #666666;
+            --gray-light: #F5F5F5;
+            --gray-lighter: #FAFAFA;
+            --border-color: #E8E8E8;
+            --success: #4CAF50;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: var(--secondary);
+            color: var(--primary);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Layout Principal */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background: var(--secondary);
+        }
+
+        /* Status Bar */
+        .status-bar {
+            background: var(--primary);
+            color: var(--secondary);
+            padding: 0.5rem 1.5rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        /* Header */
+        header {
+            background: var(--secondary);
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1rem;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+        }
+
+        .header-title {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -1.5px;
+            color: var(--primary);
+        }
+
+        .header-subtitle {
+            font-size: 0.9rem;
+            color: var(--gray-medium);
+            margin-top: 0.25rem;
+            font-weight: 400;
+        }
+
+        .header-user {
+            text-align: right;
+        }
+
+        .user-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .user-stat {
+            font-size: 0.8rem;
+            color: var(--gray-medium);
+            margin-top: 0.25rem;
+        }
+
+        /* Tab Navigation */
+        .tabs-navigation {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--secondary);
+            padding: 0;
+            margin: 0;
+            overflow-x: auto;
+        }
+
+        .tab-button {
+            padding: 1rem 1.5rem;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--gray-medium);
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            white-space: nowrap;
+            position: relative;
+        }
+
+        .tab-button:hover {
+            color: var(--primary);
+        }
+
+        .tab-button.active {
+            color: var(--primary);
+            border-bottom-color: var(--accent);
+        }
+
+        .tab-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--accent);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .view {
+            display: none;
+        }
+
+        .view.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Activity Feed / Dashboard */
+        .activity-feed {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .activity-card {
+            background: var(--gray-lighter);
+            border-radius: 12px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            position: relative;
+        }
+
+        .activity-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 6px;
+            height: 100%;
+            background: var(--accent);
+            border-radius: 12px 0 0 12px;
+            transform: scaleY(0);
+            transform-origin: top;
+            transition: transform 0.3s ease;
+        }
+
+        .activity-card:hover {
+            background: var(--gray-light);
+            border-color: var(--accent);
+        }
+
+        .activity-card:hover::before {
+            transform: scaleY(1);
+        }
+
+        .activity-card.completed {
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.08) 0%, rgba(76, 175, 80, 0.02) 100%);
+            border-color: var(--success);
+        }
+
+        .activity-card.completed::before {
+            background: var(--success);
+            transform: scaleY(1);
+        }
+
+        .activity-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+        }
+
+        .activity-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary);
+            letter-spacing: -0.5px;
+        }
+
+        .activity-badge {
+            background: var(--accent);
+            color: white;
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .activity-subtitle {
+            font-size: 0.9rem;
+            color: var(--gray-medium);
+            margin-bottom: 1rem;
+        }
+
+        .activity-stats {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--gray-medium);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-value {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: -0.5px;
+        }
+
+        .stat-accent {
+            color: var(--accent);
+        }
+
+        /* Circles / Weekly Grid */
+        .weekly-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .day-circle {
+            aspect-ratio: 1;
+            background: var(--gray-lighter);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .day-circle::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--accent), rgba(255, 107, 53, 0.7));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            border-radius: 12px;
+            z-index: 0;
+        }
+
+        .day-circle:hover::before {
+            opacity: 0.1;
+        }
+
+        .day-circle.completed::before {
+            opacity: 1;
+        }
+
+        .day-circle-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+        }
+
+        .day-circle-day {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--gray-medium);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .day-circle-number {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: -1px;
+        }
+
+        .day-circle.completed .day-circle-day {
+            color: white;
+        }
+
+        .day-circle.completed .day-circle-number {
+            color: var(--accent);
+        }
+
+        /* Section Headers */
+        .section-header {
+            font-size: 1.3rem;
+            font-weight: 800;
+            margin: 2rem 0 1.5rem 0;
+            color: var(--primary);
+            letter-spacing: -0.5px;
+        }
+
+        .section-subtitle {
+            font-size: 0.9rem;
+            color: var(--gray-medium);
+            margin-bottom: 1.5rem;
+            font-weight: 400;
+        }
+
+        /* Day Selector Horizontal */
+        .day-selector-h {
+            display: flex;
+            gap: 0.75rem;
+            overflow-x: auto;
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .day-chip {
+            padding: 0.5rem 1rem;
+            background: var(--gray-lighter);
+            border: 2px solid transparent;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--gray-medium);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            font-family: inherit;
+        }
+
+        .day-chip:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .day-chip.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        /* Exercise Items */
+        .exercise-item {
+            background: var(--gray-lighter);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .exercise-item:hover {
+            background: var(--gray-light);
+            border-color: var(--accent);
+        }
+
+        .exercise-info {
+            flex: 1;
+        }
+
+        .exercise-name {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.3px;
+        }
+
+        .exercise-details {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-bottom: 0.5rem;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .detail-label {
+            font-size: 0.75rem;
+            color: var(--gray-medium);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .detail-value {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: -0.3px;
+        }
+
+        .detail-value.accent {
+            color: var(--accent);
+        }
+
+        .exercise-notes {
+            font-size: 0.85rem;
+            color: var(--gray-medium);
+            margin-top: 0.5rem;
+            font-style: italic;
+        }
+
+        .exercise-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            color: var(--gray-medium);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .btn-icon:hover {
+            background: var(--accent);
+            color: white;
+        }
+
+        /* Forms */
+        .form-section {
+            background: var(--gray-lighter);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-title {
+            font-size: 1.25rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+            letter-spacing: -0.5px;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+            background: white;
+            color: var(--primary);
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 1rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            background: #FF5722;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(255, 107, 53, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--gray-lighter);
+            color: var(--primary);
+            border: 2px solid var(--border-color);
+            width: 100%;
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-light);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn-group .btn {
+            flex: 1;
+        }
+
+        /* Chart Container */
+        .chart-container {
+            background: var(--gray-lighter);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            position: relative;
+            height: 320px;
+        }
+
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+            letter-spacing: -0.3px;
+        }
+
+        /* Insights */
+        .insight-card {
+            background: var(--gray-lighter);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 6px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .insight-card.success {
+            border-left-color: var(--success);
+            background: linear-gradient(to right, rgba(76, 175, 80, 0.08), transparent);
+        }
+
+        .insight-card.warning {
+            border-left-color: var(--accent);
+            background: linear-gradient(to right, rgba(255, 107, 53, 0.08), transparent);
+        }
+
+        .insight-title {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.3px;
+        }
+
+        .insight-description {
+            font-size: 0.9rem;
+            color: var(--gray-medium);
+            margin-bottom: 0.75rem;
+        }
+
+        .insight-recommendation {
+            background: white;
+            border-left: 3px solid var(--accent);
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1.5rem;
+            background: var(--gray-lighter);
+            border-radius: 12px;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+
+        .empty-state-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state-text {
+            font-size: 0.9rem;
+            color: var(--gray-medium);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-box {
+            background: var(--gray-lighter);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .stat-box:hover {
+            border-color: var(--accent);
+            background: var(--gray-light);
+        }
+
+        .stat-box-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--accent);
+            letter-spacing: -1px;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-box-label {
+            font-size: 0.8rem;
+            color: var(--gray-medium);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 1rem;
+            }
+
+            .header-content {
+                flex-direction: column;
+            }
+
+            .header-user {
+                margin-top: 1rem;
+                text-align: left;
+            }
+
+            .weekly-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .activity-stats {
+                gap: 1rem;
+            }
+
+            .exercise-item {
+                flex-direction: column;
+            }
+
+            .exercise-actions {
+                margin-top: 1rem;
+                width: 100%;
+            }
+
+            .btn-icon {
+                flex: 1;
+            }
+
+            .form-section {
+                padding: 1.5rem;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--gray-lighter);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #FF5722;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <span>LIFT PRO</span>
+            <span>Sign Out</span>
+        </div>
+
+        <!-- Header -->
+        <header>
+            <div class="header-content">
+                <div>
+                    <div class="header-title">Let's Train</div>
+                    <div class="header-subtitle">Stay strong and consistent</div>
+                </div>
+                <div class="header-user">
+                    <div class="user-name">Week 3</div>
+                    <div class="user-stat">3 of 7 workouts</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Tabs -->
+        <div class="tabs-navigation">
+            <button class="tab-button active" onclick="switchView('feed'); updateTab(0)">Feed</button>
+            <button class="tab-button" onclick="switchView('workout'); updateTab(1)">Workout</button>
+            <button class="tab-button" onclick="switchView('progress'); updateTab(2)">Progress</button>
+            <button class="tab-button" onclick="switchView('insights'); updateTab(3)">Insights</button>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Feed View -->
+            <div class="view active" id="feed">
+                <div class="section-header">This Week's Plan</div>
+                <div class="weekly-grid" id="weeklyGrid"></div>
+
+                <div class="section-header">Your Activities</div>
+                <div class="activity-feed" id="activityFeed"></div>
+            </div>
+
+            <!-- Workout View -->
+            <div class="view" id="workout">
+                <div class="section-header" id="workoutDay">Monday</div>
+                <div class="section-subtitle" id="workoutName">Chest & Triceps</div>
+
+                <div class="day-selector-h" id="daySelectorH"></div>
+
+                <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+                    <button class="btn btn-primary" style="flex: 1;" onclick="completeWorkout()">Complete Today</button>
+                    <button class="btn btn-secondary" style="flex: 1;" onclick="toggleAddExercise()">Add Exercise</button>
+                </div>
+
+                <div class="section-header">Exercises</div>
+                <div id="exerciseList"></div>
+
+                <div class="form-section" id="addExerciseForm" style="display: none; margin-top: 1.5rem;">
+                    <div class="form-title">Add Exercise</div>
+                    <div class="form-group">
+                        <label>Exercise Name</label>
+                        <input type="text" id="exerciseName" placeholder="e.g., Bench Press">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label>Sets</label>
+                            <input type="number" id="exerciseSets" value="4" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label>Reps</label>
+                            <input type="number" id="exerciseReps" value="8" min="1">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Weight (kg)</label>
+                        <input type="number" id="exerciseWeight" value="100" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Notes</label>
+                        <textarea id="exerciseNotes" placeholder="How did it feel?"></textarea>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="addExercise()">Save</button>
+                        <button class="btn btn-secondary" onclick="toggleAddExercise()">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress View -->
+            <div class="view" id="progress">
+                <div class="section-header">Your Progress</div>
+                
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-box-value" id="statCompleted">0/7</div>
+                        <div class="stat-box-label">Workouts</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-box-value" id="statExercises">0</div>
+                        <div class="stat-box-label">Exercises</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-box-value" id="statTracked">0</div>
+                        <div class="stat-box-label">Tracked</div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="form-title">Log Measurement</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label>Weight (kg)</label>
+                            <input type="number" id="metricWeight" placeholder="85.5" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label>Body Fat %</label>
+                            <input type="number" id="metricBodyFat" placeholder="18.5" step="0.1">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="addMetric()">Save Measurement</button>
+                </div>
+
+                <div class="section-header">Weight Trend</div>
+                <div class="chart-container">
+                    <canvas id="progressChart"></canvas>
+                </div>
+
+                <div class="section-header">History</div>
+                <div id="metricsList"></div>
+            </div>
+
+            <!-- Insights View -->
+            <div class="view" id="insights">
+                <div class="section-header">Your Insights</div>
+                <div id="insightsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        const state = {
+            workouts: {
+                Monday: { name: 'Chest & Triceps', completed: false },
+                Tuesday: { name: 'Back & Biceps', completed: false },
+                Wednesday: { name: 'Legs', completed: false },
+                Thursday: { name: 'Shoulders & Core', completed: false },
+                Friday: { name: 'Arms & Cardio', completed: false },
+                Saturday: { name: 'Full Body', completed: false },
+                Sunday: { name: 'Rest Day', completed: false }
+            },
+            exercises: {},
+            metrics: [],
+            insights: [],
+            selectedDay: 'Monday'
+        };
+
+        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+        // Initialize
+        function init() {
+            state.exercises['Monday'] = [
+                { id: 1, name: 'Bench Press', sets: 4, reps: 8, weight: 100, notes: 'Strong form' },
+                { id: 2, name: 'Incline DB Press', sets: 3, reps: 10, weight: 40, notes: '' }
+            ];
+            state.exercises['Tuesday'] = [
+                { id: 3, name: 'Deadlift', sets: 5, reps: 5, weight: 140, notes: 'Great session' }
+            ];
+            state.exercises['Wednesday'] = [
+                { id: 4, name: 'Squat', sets: 4, reps: 8, weight: 120, notes: '' },
+                { id: 5, name: 'Leg Press', sets: 3, reps: 12, weight: 250, notes: '' }
+            ];
+
+            state.metrics = [
+                { date: '2024-03-10', weight: 86.5, bodyFat: 18.5 },
+                { date: '2024-03-11', weight: 86.2, bodyFat: 18.4 },
+                { date: '2024-03-12', weight: 85.8, bodyFat: 18.2 },
+                { date: '2024-03-13', weight: 85.5, bodyFat: 18.0 },
+                { date: '2024-03-14', weight: 85.3, bodyFat: 17.9 }
+            ];
+
+            state.insights = [
+                {
+                    type: 'success',
+                    title: 'Bench Press: +10kg',
+                    description: 'Great strength gains in the last month',
+                    recommendation: 'Keep up the momentum!'
+                },
+                {
+                    type: 'success',
+                    title: 'Body Composition',
+                    description: 'Fat loss: -0.6% in 14 days',
+                    recommendation: 'Perfect recomposition progress.'
+                },
+                {
+                    type: 'warning',
+                    title: 'Deadlift Plateau',
+                    description: 'Weight stable for 7 days',
+                    recommendation: 'Try different rep ranges.'
+                }
+            ];
+
+            state.workouts['Monday'].completed = true;
+            state.workouts['Tuesday'].completed = true;
+            state.workouts['Wednesday'].completed = true;
+
+            renderAll();
+        }
+
+        function switchView(viewName) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById(viewName).classList.add('active');
+            
+            if (viewName === 'progress') {
+                setTimeout(() => renderChart(), 100);
+            }
+        }
+
+        function updateTab(index) {
+            document.querySelectorAll('.tab-button').forEach((btn, i) => {
+                btn.classList.toggle('active', i === index);
+            });
+        }
+
+        function renderAll() {
+            updateStats();
+            renderFeed();
+            renderWorkout();
+            renderProgress();
+            renderInsights();
+        }
+
+        function updateStats() {
+            const completed = Object.values(state.workouts).filter(w => w.completed).length;
+            const totalExercises = Object.values(state.exercises).reduce((sum, arr) => sum + (arr ? arr.length : 0), 0);
+            const withWeight = Object.values(state.exercises).reduce((sum, arr) => {
+                return sum + (arr ? arr.filter(e => e.weight > 0).length : 0);
+            }, 0);
+
+            document.getElementById('statCompleted').textContent = `${completed}/7`;
+            document.getElementById('statExercises').textContent = totalExercises;
+            document.getElementById('statTracked').textContent = withWeight;
+        }
+
+        function renderFeed() {
+            const grid = document.getElementById('weeklyGrid');
+            grid.innerHTML = days.map(day => {
+                const workout = state.workouts[day];
+                return `
+                    <div class="day-circle ${workout.completed ? 'completed' : ''}" onclick="selectDayFromFeed('${day}')">
+                        <div class="day-circle-content">
+                            <div class="day-circle-day">${day.substring(0, 3)}</div>
+                            <div class="day-circle-number">${(state.exercises[day] || []).length}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            const feed = document.getElementById('activityFeed');
+            feed.innerHTML = days.map(day => {
+                const workout = state.workouts[day];
+                const exerciseCount = (state.exercises[day] || []).length;
+                return `
+                    <div class="activity-card ${workout.completed ? 'completed' : ''}" onclick="selectDayFromFeed('${day}')">
+                        <div class="activity-header">
+                            <div class="activity-title">${day}</div>
+                            ${workout.completed ? '<div class="activity-badge">Completed</div>' : ''}
+                        </div>
+                        <div class="activity-subtitle">${workout.name}</div>
+                        <div class="activity-stats">
+                            <div class="stat">
+                                <span class="stat-label">Exercises</span>
+                                <span class="stat-value accent">${exerciseCount}</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Status</span>
+                                <span class="stat-value">${workout.completed ? 'Done' : 'Pending'}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectDayFromFeed(day) {
+            state.selectedDay = day;
+            switchView('workout');
+            updateTab(1);
+            renderWorkout();
+        }
+
+        function renderWorkout() {
+            const workout = state.workouts[state.selectedDay];
+            document.getElementById('workoutDay').textContent = state.selectedDay;
+            document.getElementById('workoutName').textContent = workout.name;
+
+            const selector = document.getElementById('daySelectorH');
+            selector.innerHTML = days.map(day => `
+                <button class="day-chip ${day === state.selectedDay ? 'active' : ''}" onclick="selectDay('${day}')">
+                    ${day.substring(0, 3)}
+                </button>
+            `).join('');
+
+            const exercises = state.exercises[state.selectedDay] || [];
+            const list = document.getElementById('exerciseList');
+
+            if (exercises.length === 0) {
+                list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">→</div><div class="empty-state-title">No Exercises Yet</div><div class="empty-state-text">Add your first exercise to begin</div></div>';
+                return;
+            }
+
+            list.innerHTML = exercises.map((ex, i) => `
+                <div class="exercise-item">
+                    <div class="exercise-info">
+                        <div class="exercise-name">${ex.name}</div>
+                        <div class="exercise-details">
+                            <div class="detail-item">
+                                <span class="detail-label">Sets</span>
+                                <span class="detail-value">${ex.sets}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Reps</span>
+                                <span class="detail-value">${ex.reps}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Weight</span>
+                                <span class="detail-value accent">${ex.weight}kg</span>
+                            </div>
+                        </div>
+                        ${ex.notes ? `<div class="exercise-notes">${ex.notes}</div>` : ''}
+                    </div>
+                    <div class="exercise-actions">
+                        <button class="btn-icon" onclick="editExercise(${i})">✏</button>
+                        <button class="btn-icon" onclick="deleteExercise(${i})">✕</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function selectDay(day) {
+            state.selectedDay = day;
+            renderWorkout();
+        }
+
+        function toggleAddExercise() {
+            const form = document.getElementById('addExerciseForm');
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function addExercise() {
+            const name = document.getElementById('exerciseName').value;
+            if (!name) return;
+
+            if (!state.exercises[state.selectedDay]) {
+                state.exercises[state.selectedDay] = [];
+            }
+
+            state.exercises[state.selectedDay].push({
+                id: Date.now(),
+                name,
+                sets: parseInt(document.getElementById('exerciseSets').value),
+                reps: parseInt(document.getElementById('exerciseReps').value),
+                weight: parseInt(document.getElementById('exerciseWeight').value),
+                notes: document.getElementById('exerciseNotes').value
+            });
+
+            document.getElementById('exerciseName').value = '';
+            document.getElementById('exerciseSets').value = '4';
+            document.getElementById('exerciseReps').value = '8';
+            document.getElementById('exerciseWeight').value = '100';
+            document.getElementById('exerciseNotes').value = '';
+
+            toggleAddExercise();
+            renderWorkout();
+            renderFeed();
+            updateStats();
+        }
+
+        function editExercise(index) {
+            const ex = state.exercises[state.selectedDay][index];
+            document.getElementById('exerciseName').value = ex.name;
+            document.getElementById('exerciseSets').value = ex.sets;
+            document.getElementById('exerciseReps').value = ex.reps;
+            document.getElementById('exerciseWeight').value = ex.weight;
+            document.getElementById('exerciseNotes').value = ex.notes;
+            deleteExercise(index);
+            toggleAddExercise();
+        }
+
+        function deleteExercise(index) {
+            state.exercises[state.selectedDay].splice(index, 1);
+            renderWorkout();
+            renderFeed();
+            updateStats();
+        }
+
+        function completeWorkout() {
+            state.workouts[state.selectedDay].completed = !state.workouts[state.selectedDay].completed;
+            updateStats();
+            renderFeed();
+            renderWorkout();
+        }
+
+        function renderProgress() {
+            const list = document.getElementById('metricsList');
+            if (state.metrics.length === 0) {
+                list.innerHTML = '<div class="empty-state"><div class="empty-state-title">No Measurements</div></div>';
+            } else {
+                list.innerHTML = [...state.metrics].reverse().map(m => `
+                    <div class="activity-card">
+                        <div class="activity-header">
+                            <div class="activity-title">${m.date}</div>
+                        </div>
+                        <div class="activity-stats">
+                            <div class="stat">
+                                <span class="stat-label">Weight</span>
+                                <span class="stat-value accent">${m.weight}kg</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Body Fat</span>
+                                <span class="stat-value accent">${m.bodyFat}%</span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function addMetric() {
+            const weight = parseFloat(document.getElementById('metricWeight').value);
+            const bodyFat = parseFloat(document.getElementById('metricBodyFat').value);
+
+            if (!weight) return;
+
+            const today = new Date().toISOString().split('T')[0];
+            state.metrics.push({ date: today, weight, bodyFat });
+            state.metrics.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            document.getElementById('metricWeight').value = '';
+            document.getElementById('metricBodyFat').value = '';
+
+            renderProgress();
+            renderChart();
+        }
+
+        let chartInstance = null;
+
+        function renderChart() {
+            const ctx = document.getElementById('progressChart');
+            if (!ctx || state.metrics.length === 0) return;
+
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: state.metrics.map(m => m.date),
+                    datasets: [{
+                        label: 'Weight (kg)',
+                        data: state.metrics.map(m => m.weight),
+                        borderColor: '#FF6B35',
+                        backgroundColor: 'rgba(255, 107, 53, 0.08)',
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#FF6B35',
+                        pointBorderColor: '#FFFFFF',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            grid: { color: '#E8E8E8' },
+                            ticks: { font: { family: "'Barlow', sans-serif", weight: '600' } }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderInsights() {
+            const list = document.getElementById('insightsList');
+            list.innerHTML = state.insights.map(insight => `
+                <div class="insight-card ${insight.type}">
+                    <div class="insight-title">${insight.title}</div>
+                    <div class="insight-description">${insight.description}</div>
+                    <div class="insight-recommendation">${insight.recommendation}</div>
+                </div>
+            `).join('');
+        }
+
+        init();
+    </script>
+</body>
+</html>
